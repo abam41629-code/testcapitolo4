@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Quiz: Osservazione e Qualità nei Servizi per l'Infanzia (30 domande)</title>
+  <meta name="description" content="Quiz su osservazione e qualità dei servizi per l'infanzia. 30 domande.">
+  <style>
+    :root{
+      --bg:#f7f9fb; --card:#ffffff; --accent:#2b6cb0; --muted:#6b7280;
+    }
+    /* Basic reset / layout */
+    html,body{height:100%}
+    body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;margin:0;background:var(--bg);color:#0f172a;line-height:1.45}
+    .container{max-width:900px;margin:28px auto;padding:20px}
+    header{display:flex;align-items:center;gap:16px;margin-bottom:18px}
+    h1{font-size:20px;margin:0}
+    p.lead{margin:6px 0 20px;color:var(--muted)}
+    .card{background:var(--card);border-radius:12px;padding:18px;box-shadow:0 6px 20px rgba(15,23,42,0.06)}
+    .question{margin-bottom:14px}
+    .q-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+    .q-text{font-weight:600}
+    .options{display:grid;grid-template-columns:1fr;gap:8px}
+    .option{background:#eef2ff;border:1px solid transparent;padding:10px;border-radius:8px;cursor:pointer;outline:none}
+    .option:focus{box-shadow:0 0 0 3px rgba(59,130,246,0.15)}
+    .option:hover{filter:brightness(.98)}
+    .option.checked{outline:2px solid rgba(43,108,176,.14);background:#dbeafe}
+    .btns{display:flex;gap:8px;margin-top:12px;justify-content:space-between;align-items:center}
+    button{background:var(--accent);color:#fff;border:0;padding:10px 14px;border-radius:8px;cursor:pointer}
+    button.ghost{background:transparent;color:var(--accent);border:1px solid rgba(43,108,176,.12)}
+    button[disabled]{opacity:.45;cursor:not-allowed}
+    .small{font-size:13px;color:var(--muted)}
+    .progress{height:10px;background:#e6eefc;border-radius:999px;overflow:hidden;margin-bottom:12px}
+    .progress > i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),#3b82f6);width:0%}
+    .result{display:none;padding:18px;border-radius:10px;text-align:center}
+    .result.show{display:block}
+    .correct{background:#ecfdf5;color:#065f46;padding:8px;border-radius:8px;display:inline-block;margin:6px 0}
+    .wrong{background:#fff1f2;color:#9f1239;padding:8px;border-radius:8px;display:inline-block;margin:6px 0}
+    .review{margin-top:12px;text-align:left}
+    .meta{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    footer{margin-top:18px;text-align:center;color:var(--muted);font-size:13px}
+    @media (min-width:700px){
+      .options{grid-template-columns:1fr 1fr}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>Quiz: Osservazione e qualità dei servizi per l'infanzia — 30 domande</h1>
+        <p class="lead">Rispondi alle 30 domande. Alla fine vedrai il punteggio e potrai rivedere le risposte corrette.</p>
+      </div>
+    </header>
+
+    <div class="card" id="quizCard" aria-live="polite">
+      <div class="progress" aria-hidden><i id="progressBar"></i></div>
+      <div id="questionArea"></div>
+
+      <div class="btns">
+        <div>
+          <button id="prevBtn" class="ghost" type="button" aria-label="Domanda precedente">◀ Precedente</button>
+          <button id="nextBtn" class="ghost" type="button" aria-label="Domanda successiva">Successiva ▶</button>
+        </div>
+        <div class="meta">
+          <div class="small">Domanda <strong id="currentIndex">1</strong>/<span id="totalCount">30</span></div>
+          <div class="small" id="timer" style="display:none">Tempo: <span id="time">0</span>s</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card result" id="resultCard" role="region" aria-labelledby="resultTitle">
+      <h2 id="resultTitle">Risultato</h2>
+      <p id="scoreText" style="font-size:20px;margin:8px 0"></p>
+      <div id="percentText" style="font-weight:600;margin-bottom:8px"></div>
+      <div id="feedback" class="small" aria-live="polite"></div>
+      <div style="margin-top:12px">
+        <button id="retryBtn" type="button">Riprova</button>
+        <button id="reviewBtn" class="ghost" type="button">Mostra la revisione</button>
+      </div>
+      <div class="review" id="reviewArea" style="display:none"></div>
+    </div>
+
+    <footer>
+      Creato automaticamente — domande tratte dal capitolo su osservazione, SVANI, ISQUEN, SPRING e IDEA.
+    </footer>
+  </div>
+
+  <script>
+    // DOM-ready minimal wrapper to be robust on some hosts
+    (function () {
+      // ======= QUIZ DATA =======
+      const quiz = [
+        {q:"Quale termine descrive l’azione di 'esaminare con cura per capire e raccogliere informazioni'?", a:["Vedere","Guardare","Osservare","Notare"], correct:2},
+        {q:"Qual è la prima fase dell'osservazione secondo Magri e Rossi?", a:["Raccolta dei dati","Analisi dei dati","Focalizzazione","Condivisione"], correct:2},
+        {q:"Quale modalità NON è un metodo aperto?", a:["Diario di bordo","Registrazioni aneddotiche","Videoregistrazioni","Check-list"], correct:3},
+        {q:"Cosa misura una rating scale?", a:["Solo presenza/assenza","Intensità, frequenza o grado di uno specifico comportamento","Solo numero di occorrenze","Solo opinioni dei genitori"], correct:1},
+        {q:"Quale tra questi è uno strumento 'chiuso'?", a:["Diario di bordo","Griglia di osservazione","Video","Registrazioni aneddotiche"], correct:1},
+        {q:"Quante subscale ha la SVANI (secondo il testo)?", a:["5","7","9","4"], correct:1},
+        {q:"Qual è l'ordine corretto delle fasi dell'osservazione sistematica?", a:["Analisi, raccolta dati, focalizzazione","Focalizzazione, raccolta dati, analisi","Raccolta dati, focalizzazione, analisi","Focalizzazione, analisi, raccolta dati"], correct:1},
+        {q:"Nella SVANI, il punteggio è graduato da:", a:["1 a 5","1 a 7","0 a 10","1 a 4"], correct:1},
+        {q:"Quale subscala SVANI riguarda 'Ascoltare e parlare'?", a:["Subscala 1","Subscala 3","Subscala 5","Subscala 7"], correct:1},
+        {q:"Quale affermazione sul diario di bordo è corretta?", a:["È uno strumento chiuso","Ha linguaggio narrativo e riflessione personale","Serve solo per somministrare test","Non contiene riferimenti temporali"], correct:1},
+        {q:"Le registrazioni aneddotiche sono utili per:", a:["Annotare episodi particolari o critici","Sostituire tutte le altre osservazioni","Valutare solo l'ambiente fisico","Sostituire il progetto educativo"], correct:0},
+        {q:"ISQUEN è nato per:", a:["Valutare la qualità educativa del nido in modo più articolato rispetto alla SVANI","Sostituire totalmente la SVANI in tutte le regioni","Valutare solo gli arredi","Valutare solo il personale"], correct:0},
+        {q:"Quante aree principali ha l'ISQUEN (come descritto)?", a:["2","3","4","5"], correct:2},
+        {q:"Quale tra questi fa parte delle procedure dell'ISQUEN?", a:["Indicatori condivisi","Eterovalutazione unica e immodificabile","Solo osservazione video","Valutazione numerica rigida senza descrittori"], correct:0},
+        {q:"Lo SPRING è pensato principalmente per:", a:["La valutazione sommativa nazionale","Sostenere processi riflessivi e indagini valutative nei nidi","Valutare solo la sicurezza degli edifici","Valutare solo i materiali pedagogici"], correct:1},
+        {q:"Quale dimensione NON è parte delle tre macro-dimensioni dello SPRING?", a:["Qualità del contesto educativo","Qualità del lavoro di équipe","Qualità del rapporto con le famiglie","Valutazione economica del nido"], correct:3},
+        {q:"Lo SPRING utilizza descrittori-indizi ottenuti da:", a:["Osservazione, analisi documentale e colloquio","Solo questionari online","Solo interviste telefoniche","Solo autovalutazione senza evidenze"], correct:0},
+        {q:"IDEA è uno strumento sviluppato presso:", a:["Università di Padova (Dip. FISPPA)","Ministero dell'Istruzione","Regione Toscana","Università di Bologna"], correct:0},
+        {q:"L'IDEA include indicatori su quali ambiti? (esempio)", a:["Solo spazi","Contesto, rigore metodologico e rete/territorio","Solo formazione del personale","Solo il rapporto con le famiglie"], correct:1},
+        {q:"Quale elemento è fondamentale per rendere l'osservazione sistematica?", a:["Affidarsi solo alla memoria","Metodo, intenzionalità e sistematicità","Osservare senza scopo","Non documentare nulla"], correct:1},
+        {q:"Una check-list serve per:", a:["Registrare in modo libero e narrativo","Controllare la presenza/assenza di comportamenti predefiniti","Sostituire la griglia di osservazione sempre","Fare valutazioni psicodiagnostiche cliniche"], correct:1},
+        {q:"Secondo il testo, l'obiettivo principale dell'osservazione educativa è:", a:["Sanzionare gli alunni","'Scattare una fotografia' dei processi di apprendimento e regolare l'azione educativa","Sostituire gli esami finali","Isolare i bambini con difficoltà"], correct:1},
+        {q:"Nella SVANI, l'item 16 riguarda:", a:["Pasti e merende","Libri e illustrazioni","Interazione adulto-bambino","Organizzazione delle attività"], correct:1},
+        {q:"Quale punteggio SVANI corrisponde solitamente a 'eccellente'?", a:["1","3","5","7"], correct:3},
+        {q:"L'ISQUEN utilizza un sistema di descrittori (A,B,C). Quale corrispondenza è riportata nel testo?", a:["A=1, B=3, C=5","A=1, B=2, C=3","A=0, B=1, C=2","A=1, B=4, C=7"], correct:0},
+        {q:"Lo SPRING al posto delle scale numeriche usa:", a:["Domande-guida e descrittori-indizi","Solo voti numerici","Sondaggio online anonimo","Diagrammi di flusso automatici"], correct:0},
+        {q:"Quale strumento favorisce l'autosservazione e lo sviluppo professionale degli educatori?", a:["Videoregistrazioni","Solo checklist","Solo questionari dei genitori","Solo punteggi numerici"], correct:0},
+        {q:"Per costruire una griglia di osservazione efficace occorre:", a:["Formulare un'ipotesi iniziale e trasformare abilità in categorie osservabili","Lasciare tutto al caso","Usare esclusivamente termini vaghi","Non coinvolgere il gruppo di lavoro"], correct:0},
+        {q:"Quale tra questi NON è uno scopo dell'osservazione secondo il testo?", a:["Ricostruire e comprendere ciò che accade","Dare significato alle azioni","Sostituire ogni interazione educativa con registrazioni tecnologiche","Valutare la continuità dell'apprendimento"], correct:2}
+      ];
+
+      // ======= DOM refs & state =======
+      const totalCount = quiz.length;
+      const questionArea = document.getElementById('questionArea');
+      const progressBar = document.getElementById('progressBar');
+      const currentIndexEl = document.getElementById('currentIndex');
+      const totalCountEl = document.getElementById('totalCount');
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const resultCard = document.getElementById('resultCard');
+      const quizCard = document.getElementById('quizCard');
+      const scoreText = document.getElementById('scoreText');
+      const percentText = document.getElementById('percentText');
+      const feedback = document.getElementById('feedback');
+      const retryBtn = document.getElementById('retryBtn');
+      const reviewBtn = document.getElementById('reviewBtn');
+      const reviewArea = document.getElementById('reviewArea');
+
+      totalCountEl.textContent = totalCount;
+
+      let idx = 0;
+      let answers = new Array(totalCount).fill(null);
+
+      // ======= Helpers =======
+      function escapeHtml(str){
+        return String(str).replace(/[&<>"'`=\/]/g, s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','/':'&#x2F;','`':'&#x60;','=':'&#x3D;'})[s]);
+      }
+
+      function renderQuestion(i){
+        const item = quiz[i];
+        currentIndexEl.textContent = i+1;
+
+        // build question nodes (safer than long innerHTML)
+        const qWrap = document.createElement('div');
+        qWrap.className = 'question';
+
+        const qHead = document.createElement('div');
+        qHead.className = 'q-head';
+        const qText = document.createElement('div');
+        qText.className = 'q-text';
+        qText.textContent = `Q${i+1}. ${item.q}`;
+        qHead.appendChild(qText);
+        qWrap.appendChild(qHead);
+
+        const optsWrap = document.createElement('div');
+        optsWrap.className = 'options';
+
+        item.a.forEach((opt, j) => {
+          const optDiv = document.createElement('div');
+          optDiv.className = 'option';
+          optDiv.setAttribute('data-opt', j);
+          optDiv.setAttribute('role', 'button');
+          optDiv.setAttribute('tabindex', '0');
+          optDiv.innerHTML = `${String.fromCharCode(65+j)}. ${escapeHtml(opt)}`;
+          optDiv.addEventListener('click', onOptionClick);
+          optDiv.addEventListener('keydown', (e)=>{ if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOptionClick({currentTarget:optDiv}); } });
+          optsWrap.appendChild(optDiv);
+        });
+
+        qWrap.appendChild(optsWrap);
+
+        // replace area
+        questionArea.innerHTML = '';
+        questionArea.appendChild(qWrap);
+
+        // mark previously selected
+        if(answers[i] !== null){
+          const toMark = questionArea.querySelector(`.option[data-opt="${answers[i]}"]`);
+          if(toMark) toMark.classList.add('checked');
+        }
+
+        // progress (use i+1 so first question shows >0)
+        const pct = Math.round(((i) / totalCount) * 100);
+        progressBar.style.width = pct + '%';
+
+        prevBtn.disabled = i === 0;
+        nextBtn.textContent = i === totalCount-1 ? 'Termina' : 'Successiva ▶';
+      }
+
+      function onOptionClick(e){
+        const el = e.currentTarget || e.target;
+        const opt = parseInt(el.getAttribute('data-opt'),10);
+        // mark and unmark others
+        questionArea.querySelectorAll('.option').forEach(o=>o.classList.remove('checked'));
+        el.classList.add('checked');
+        answers[idx] = opt;
+      }
+
+      prevBtn.addEventListener('click', ()=>{ if(idx>0){ idx--; renderQuestion(idx); } });
+      nextBtn.addEventListener('click', ()=>{
+        if(idx === totalCount-1){
+          const unanswered = answers.reduce((acc,v,i)=> v===null?acc.concat(i+1):acc, []);
+          if(unanswered.length>0){
+            // conferma semplice; non obbligatoria
+            if(!confirm(`Hai ${unanswered.length} domande senza risposta. Vuoi comunque terminare? Premi 'Annulla' per tornare a rispondere.`)){
+              return;
+            }
+          }
+          showResult();
+        } else {
+          idx++;
+          renderQuestion(idx);
+        }
+      });
+
+      function showResult(){
+        let score = 0;
+        const details = [];
+        for(let i=0;i<quiz.length;i++){
+          const correct = quiz[i].correct;
+          const given = answers[i];
+          const ok = given === correct;
+          if(ok) score++;
+          details.push({i, q:quiz[i].q, chosen:given, correct});
+        }
+
+        const percent = Math.round((score/totalCount)*100);
+        scoreText.textContent = `${score} / ${totalCount} risposte corrette`;
+        percentText.textContent = `${percent}%`;
+        feedback.textContent = percent >= 80 ? 'Ottimo lavoro!' : (percent >= 60 ? 'Buon risultato, puoi migliorare ancora.' : 'Ti suggerisco di rileggere il materiale e riprovare.');
+
+        quizCard.style.display = 'none';
+        resultCard.classList.add('show');
+
+        // build reviewArea (escaped)
+        reviewArea.innerHTML = details.map(d=>{
+          const chosenTextEsc = d.chosen===null ? '<em>Non risposto</em>' : escapeHtml(quiz[d.i].a[d.chosen]);
+          const correctTextEsc = escapeHtml(quiz[d.i].a[d.correct]);
+          const mark = (d.chosen === d.correct) ? `<span class="correct">✔</span>` : `<span class="wrong">✖</span>`;
+          return `<div style="padding:10px;border-bottom:1px solid #eef2f7">
+            <div style="font-weight:600">Q${d.i+1}. ${escapeHtml(d.q)} ${mark}</div>
+            <div style="margin-top:6px"><strong>Tua risposta:</strong> ${chosenTextEsc}</div>
+            <div><strong>Risposta corretta:</strong> ${correctTextEsc}</div>
+          </div>`;
+        }).join('');
+      }
+
+      reviewBtn.addEventListener('click', ()=>{
+        reviewArea.style.display = 'block';
+        reviewBtn.style.display = 'none';
+        // scroll to review for UX on smaller screens
+        reviewArea.scrollIntoView({behavior:'smooth'});
+      });
+
+      retryBtn.addEventListener('click', ()=>{
+        answers = new Array(totalCount).fill(null);
+        idx = 0;
+        resultCard.classList.remove('show');
+        quizCard.style.display = '';
+        reviewArea.style.display = 'none';
+        reviewBtn.style.display = '';
+        renderQuestion(0);
+      });
+
+      // initial render
+      renderQuestion(0);
+
+      // Expose nothing to global scope
+    })();
+  </script>
+</body>
+</html>
